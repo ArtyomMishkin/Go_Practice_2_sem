@@ -1,0 +1,104 @@
+# pz16-kubernetes
+
+**Практическое занятие №16:** Публикация в Kubernetes
+
+## Связь с курсом
+
+| Практика | Что даёт |
+|----------|----------|
+| pz7 | Docker-образ tasks |
+| pz8 | CI pipeline |
+| pz15 | systemd на VPS |
+| **pz16** | **K8s: Deployment, Service, ConfigMap, probes** |
+
+## Структура
+
+```
+pz16-kubernetes/
+├── cmd/tasks/main.go
+├── Dockerfile
+├── deploy/k8s/
+│   ├── configmap.yaml
+│   ├── deployment.yaml
+│   └── service.yaml
+├── build-image.ps1
+└── apply.ps1
+```
+
+## Требования
+
+- Docker
+- Kubernetes (minikube / kind / k3s)
+- kubectl
+
+## Шаги
+
+### 1. Собрать образ
+
+```powershell
+.\build-image.ps1
+```
+
+### 2. Загрузить в kind (если kind)
+
+```powershell
+kind load docker-image techip-tasks:0.1
+```
+
+### 3. Применить манифесты
+
+```powershell
+.\apply.ps1
+```
+
+### 4. Проверить
+
+```powershell
+kubectl get pods
+kubectl logs <pod-name>
+kubectl port-forward svc/tasks 8082:8082
+```
+
+В другом окне:
+
+```powershell
+curl.exe -i http://localhost:8082/health
+```
+
+### 5. Масштабирование
+
+```powershell
+kubectl scale deployment tasks --replicas=2
+kubectl get pods
+kubectl scale deployment tasks --replicas=1
+```
+
+### 6. Удалить
+
+```powershell
+kubectl delete -f deploy/k8s/service.yaml
+kubectl delete -f deploy/k8s/deployment.yaml
+kubectl delete -f deploy/k8s/configmap.yaml
+```
+
+## ConfigMap
+
+- `TASKS_PORT=8082`
+- `AUTH_BASE_URL=http://auth:8081`
+- `LOG_LEVEL=info`
+
+## Probes
+
+- **readiness** — `/health`, сервис получает трафик когда готов
+- **liveness** — `/health`, перезапуск «зависшего» контейнера
+
+## Образ
+
+Тег **`techip-tasks:0.1`** (не `latest`) — как в методичке.
+
+## Локально без K8s
+
+```powershell
+go run ./cmd/tasks
+# TASKS_PORT=8099 для теста
+```

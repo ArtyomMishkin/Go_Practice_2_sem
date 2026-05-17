@@ -1,0 +1,120 @@
+# Практическое задание 4
+
+## ЭФМО-02-25 Мишкин Артём Дмитриевич 17.05.2026
+
+---
+
+# Информация о проекте
+
+**pz4-monitoring** — HTTP-сервис на Go с экспортом метрик Prometheus и дашбордом Grafana.  
+Собираются счётчики запросов и ошибок, гистограммы длительности, метрики по студентам и gauge активных запросов.
+
+## Порты
+
+| Сервис | Порт |
+|--------|------|
+| Go-приложение | 8080 |
+| Prometheus | 9090 |
+| Grafana | 3000 |
+
+## Запуск
+
+**1. Go-приложение**
+
+```powershell
+cd pz4-monitoring
+.\start-server.ps1
+.\tests.ps1
+```
+
+Метрики: http://localhost:8080/metrics
+
+**2. Prometheus + Grafana (Docker)**
+
+```powershell
+.\start-monitoring.ps1
+.\generate-traffic.ps1
+```
+
+- Prometheus: http://localhost:9090 → Targets → `go_app` должен быть **UP**
+- Grafana: http://localhost:3000 (логин `admin` / `admin`)
+- Дашборд **PZ4 Go App Monitoring** подхватывается автоматически
+
+**Prometheus без Docker** (если установлен локально):
+
+```powershell
+prometheus --config.file=monitoring/prometheus.yml
+```
+
+## API
+
+| Метод | URL |
+|-------|-----|
+| GET | `/health` |
+| GET | `/students/{id}` |
+| GET | `/metrics` |
+
+## Метрики (база)
+
+| Метрика | Тип | Назначение |
+|---------|-----|------------|
+| `app_http_requests_total` | Counter | все HTTP-запросы (method, path) |
+| `app_http_errors_total` | Counter | ответы ≥ 400 (method, path, status_code) |
+| `app_http_request_duration_seconds` | Histogram | время обработки запроса |
+
+Пути нормализуются: `/students/1` → `/students/{id}` в labels.
+
+## Дополнительные задания (выполнено)
+
+### `app_student_requests_total`
+
+**Как работает:** при каждом обращении к `GET /students/{id}` счётчик увеличивается с label `student_id` — видно, сколько раз запрашивали конкретного студента.
+
+### `app_student_handler_duration_seconds`
+
+**Как работает:** отдельная histogram только для handler студента — измеряет время бизнес-логики (repo lookup), не весь HTTP-стек.
+
+### `app_active_requests` (Gauge)
+
+**Как работает:** middleware делает `Inc()` в начале запроса и `Dec()` в defer — показывает, сколько запросов обрабатывается прямо сейчас.
+
+### Дашборд ошибок в Grafana
+
+**Как работает:** в `pz4-dashboard.json` панели: ошибки по `status_code` (pie), запросы по `path`, средняя latency, запросы по `student_id`, gauge активных запросов.
+
+## PromQL (из методички)
+
+```promql
+sum(app_http_requests_total)
+sum(app_http_errors_total)
+sum by (path) (app_http_requests_total)
+sum(rate(app_http_request_duration_seconds_sum[1m])) / sum(rate(app_http_request_duration_seconds_count[1m]))
+sum by (status_code) (app_http_errors_total)
+```
+
+## Структура
+
+```
+pz4-monitoring/
+├── cmd/server/main.go
+├── internal/httpapi/
+├── internal/metrics/metrics.go
+├── internal/student/
+├── monitoring/
+│   ├── prometheus.yml
+│   ├── prometheus.docker.yml
+│   └── grafana/
+├── docker-compose.yml
+├── start-server.ps1
+├── start-monitoring.ps1
+├── generate-traffic.ps1
+└── tests.ps1
+```
+
+## Метрики vs логи (практика 3)
+
+| Логи (pz3) | Метрики (pz4) |
+|------------|---------------|
+| отдельные события | агрегаты во времени |
+| текст/JSON строка | числа для графиков |
+| «что случилось» | «как часто и как долго» |
