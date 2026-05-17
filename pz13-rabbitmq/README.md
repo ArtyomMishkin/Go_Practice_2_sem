@@ -9,16 +9,16 @@
 |----------|--------|
 | **pz7** | Сервис **tasks**, Bearer `demo-token`, `X-Request-ID` |
 | **pz10** | Тот же домен задач |
-| **pz13** | После `POST /v1/tasks` → событие в очередь → **worker** |
+| **pz13** | После `POST /v1/tasks` → событие в очередь → **обработчик** |
 
-Поток: **HTTP синхронно** создаёт задачу → **асинхронно** worker обрабатывает событие.
+Поток: **HTTP синхронно** создаёт задачу → **асинхронно** обработчик обрабатывает событие.
 
 ## Цели
 
-- Producer (tasks) публикует `task.created` в очередь `task_events`
-- Consumer (worker) читает, логирует, отправляет **ack**
-- **durable** queue + **persistent** messages
-- **prefetch** (по умолчанию 1)
+- Издатель (tasks) публикует `task.created` в очередь `task_events`
+- Потребитель (обработчик) читает, логирует, отправляет **подтверждение (ack)**
+- **Постоянная** очередь и **постоянные** сообщения
+- **Предварительная выборка** (prefetch, по умолчанию 1)
 
 ## Порты
 
@@ -26,7 +26,7 @@
 |-----------|------|
 | tasks HTTP | **8096** |
 | RabbitMQ AMQP | **5672** |
-| RabbitMQ UI | **15672** (guest / guest) |
+| RabbitMQ UI | **15672** (логин и пароль: guest / guest) |
 
 ## Структура
 
@@ -35,8 +35,8 @@ pz13-rabbitmq/
 ├── deploy/rabbit/docker-compose.yml
 ├── pkg/events/              # JSON-события
 ├── internal/publisher/
-├── services/tasks/          # producer
-├── services/worker/         # consumer
+├── services/tasks/          # издатель
+├── services/worker/         # потребитель
 ├── start-rabbit.ps1
 ├── start-worker.ps1
 ├── start-tasks.ps1
@@ -51,7 +51,7 @@ pz13-rabbitmq/
 .\start-rabbit.ps1
 ```
 
-**2. Worker** (отдельное окно):
+**2. Обработчик** (отдельное окно):
 
 ```powershell
 .\start-worker.ps1
@@ -69,7 +69,31 @@ pz13-rabbitmq/
 .\tests.ps1
 ```
 
-В логах worker:
+## Запуск без PowerShell
+
+Из каталога `pz13-rabbitmq`. Нужны **три** терминала.
+
+**1. RabbitMQ:**
+
+```text
+docker compose -f deploy/rabbit/docker-compose.yml up -d
+```
+
+**2. Обработчик:**
+
+```text
+cd services/worker
+go run ./cmd/worker
+```
+
+**3. Tasks (порт 8096):**
+
+```text
+cd services/tasks
+go run ./cmd/tasks
+```
+
+В логах обработчика:
 
 ```
 received event=task.created task_id=t_001 ts=... request_id=pz13-001
@@ -103,15 +127,15 @@ received event=task.created task_id=t_001 ts=... request_id=pz13-001
 
 | Значение | Поведение |
 |----------|-----------|
-| `best_effort` (по умолчанию) | Задача создана, ошибка publish только в лог |
-| `strict` | HTTP 500, если не удалось опубликовать |
+| `best_effort` (по умолчанию) | Задача создана, ошибка публикации только в лог |
+| `strict` | HTTP 500, если не удалось опубликовать в очередь |
 
 ```powershell
 $env:PUBLISH_MODE = "strict"
 .\start-tasks.ps1
 ```
 
-### Prefetch
+### Предварительная выборка (prefetch)
 
 ```powershell
 $env:PREFETCH = "5"
@@ -120,7 +144,7 @@ $env:PREFETCH = "5"
 
 ## RabbitMQ Management
 
-http://localhost:15672 — очередь `task_events`, сообщения, consumers.
+http://localhost:15672 — очередь `task_events`, сообщения, потребители.
 
 ## Переменные окружения
 
@@ -134,11 +158,7 @@ http://localhost:15672 — очередь `task_events`, сообщения, con
 
 ## Отчёт (кратко)
 
-- **Producer** — tasks после успешного POST  
-- **Consumer** — отдельный worker  
-- **ack** — сообщение не теряется при сбое до ack  
-- **durable + persistent** — переживают перезапуск RabbitMQ  
-
-## Осталось по курсу
-
-Практики **14, 15, 16** — пришли docx, сделаем по тому же шаблону.
+- **Издатель** — tasks после успешного POST
+- **Потребитель** — отдельный обработчик
+- **Подтверждение (ack)** — сообщение не теряется при сбое до подтверждения
+- **Постоянная очередь и сообщения** — переживают перезапуск RabbitMQ

@@ -5,7 +5,7 @@ curl.exe -k -s https://localhost:8443/health
 echo ""
 
 echo "=== HTTP redirect -> HTTPS ==="
-curl.exe -s -o NUL -w "HTTP:%{http_code} -> %{redirect_url}" http://localhost:8080/health
+curl.exe -s -o NUL -w "HTTP:%{http_code} -> %{redirect_url}" http://localhost:8085/health
 echo ""
 echo ""
 

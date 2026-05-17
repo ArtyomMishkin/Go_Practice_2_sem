@@ -1,13 +1,13 @@
 # pz14-job-queue
 
-**Практическое занятие №14:** Очередь задач (producer-consumer), retries, DLQ, идемпотентность
+**Практическое занятие №14:** Очередь задач (издатель–потребитель), повторы, DLQ, идемпотентность
 
 ## Связь с pz13
 
 | pz13 | pz14 |
 |------|------|
 | `task_events` — уведомление | `task_jobs` — **задача на обработку** |
-| fire-and-forget event | retries + DLQ |
+| событие без ожидания результата | повторы + DLQ |
 | — | `message_id` — идемпотентность |
 
 ## Порты
@@ -41,6 +41,26 @@ Authorization: Bearer demo-token
 .\tests.ps1
 ```
 
+## Запуск без PowerShell
+
+Из каталога `pz14-job-queue`. Три терминала — как в pz13.
+
+```text
+docker compose -f deploy/rabbit/docker-compose.yml up -d
+```
+
+```text
+cd services/worker
+go run ./cmd/worker
+```
+
+```text
+cd services/tasks
+go run ./cmd/tasks
+```
+
+API: http://localhost:8097
+
 ## Тесты
 
 - `t_001` — успех, ack
@@ -59,6 +79,6 @@ Authorization: Bearer demo-token
 
 ## Дополнительно
 
-- **Prefetch** — `PREFETCH=1` (по умолчанию)
+- **Предварительная выборка** — `PREFETCH=1` (по умолчанию)
 - **Идемпотентность** — повтор с тем же `message_id` пропускается
 - **DLQ** — смотреть в http://localhost:15672

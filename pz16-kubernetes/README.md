@@ -7,9 +7,9 @@
 | Практика | Что даёт |
 |----------|----------|
 | pz7 | Docker-образ tasks |
-| pz8 | CI pipeline |
+| pz8 | конвейер CI |
 | pz15 | systemd на VPS |
-| **pz16** | **K8s: Deployment, Service, ConfigMap, probes** |
+| **pz16** | **K8s: Deployment, Service, ConfigMap, проверки готовности** |
 
 ## Структура
 
@@ -96,9 +96,31 @@ kubectl delete -f deploy/k8s/configmap.yaml
 
 Тег **`techip-tasks:0.1`** (не `latest`) — как в методичке.
 
+## Запуск без PowerShell
+
+Из каталога `pz16-kubernetes`.
+
+```text
+docker build -t techip-tasks:0.1 .
+kind load docker-image techip-tasks:0.1
+kubectl apply -f deploy/k8s/
+kubectl get pods
+kubectl port-forward svc/tasks 8082:8082
+```
+
+Проверка: http://localhost:8082/health
+
+Масштабирование:
+
+```text
+kubectl scale deployment tasks --replicas=2
+kubectl get pods
+```
+
 ## Локально без K8s
 
-```powershell
+```text
 go run ./cmd/tasks
-# TASKS_PORT=8099 для теста
 ```
+
+Порт по умолчанию — 8082 (или задать `TASKS_PORT`).

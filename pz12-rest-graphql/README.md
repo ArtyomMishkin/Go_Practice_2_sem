@@ -9,7 +9,7 @@
 |----------|------|
 | **pz7 / pz10** | REST-сервис **tasks** |
 | **pz11** | GraphQL + gqlgen для **Task** |
-| **pz12** | **Оба API в одном процессе**, общий `store` + `service` |
+| **pz12** | **Оба API в одном процессе**, общее хранилище и сервисный слой |
 
 Один источник данных — честное сравнение без расхождения между сервисами.
 
@@ -31,7 +31,7 @@
 |-----|-----|
 | REST | `http://localhost:8095/v1/tasks` |
 | GraphQL | `http://localhost:8095/graphql` |
-| Playground | `http://localhost:8095/` |
+| Песочница GraphQL | `http://localhost:8095/` |
 
 ## Запуск
 
@@ -41,9 +41,20 @@ cd pz12-rest-graphql
 .\tests.ps1
 ```
 
+## Запуск без PowerShell
+
+Из каталога `pz12-rest-graphql` (порт **8095**):
+
+```text
+go run ./cmd/server
+```
+
+REST: http://localhost:8095/v1/tasks  
+GraphQL / песочница: http://localhost:8095/
+
 ## Сценарии сравнения
 
-### 1. Список (over-fetching)
+### 1. Список (избыточные поля в ответе)
 
 **REST** — всегда полный JSON (`description` тоже):
 
@@ -92,13 +103,13 @@ curl.exe -X POST http://localhost:8095/v1/tasks `
   -d "{\"title\":\"Сравнение REST и GraphQL\",\"description\":\"ПЗ12\"}"
 ```
 
-**GraphQL:** mutation `createTask` в Playground.
+**GraphQL:** мутация `createTask` в песочнице GraphQL.
 
 ### 4. Обновление
 
 **REST:** `PATCH /v1/tasks/t_001` с `{"done":true}`
 
-**GraphQL:** mutation `updateTask`.
+**GraphQL:** мутация `updateTask`.
 
 ### 5. Ошибки
 
@@ -112,16 +123,16 @@ curl.exe -X POST http://localhost:8095/v1/tasks `
 |----------|------|---------|
 | Точки входа | Несколько URL | Один `/graphql` |
 | Выбор полей | Фиксированный ответ | Клиент выбирает поля |
-| Over-fetching | Часто (список с `description`) | Меньше |
-| Under-fetching | Несколько запросов при связях | Один запрос |
-| Ошибки | HTTP-коды | Часто `200` + `errors[]` |
-| Документация | OpenAPI / curl | Схема + Playground |
+| Лишние поля в ответе | Часто (список с `description`) | Меньше |
+| Несколько запросов | Нужны отдельные вызовы при связях | Один запрос |
+| Ошибки | HTTP-коды | Часто `200` и массив `errors` |
+| Документация | OpenAPI / curl | Схема и песочница GraphQL |
 | Кэширование | Удобно по URL | Сложнее |
-| Когда удобнее | CRUD, публичные API | Сложные клиенты, мобильные UI |
+| Когда удобнее | простой CRUD, публичные API | сложные клиенты, мобильные интерфейсы |
 
 ## Краткий вывод (шаблон)
 
-- **REST** удобен для простых CRUD, привычен, хорошо кэшируется по URL.
+- **REST** удобен для простого CRUD, привычен, хорошо кэшируется по URL.
 - **GraphQL** удобен, когда клиенту нужны разные наборы полей без лишнего трафика.
 - Для учебного **tasks**-сервиса REST проще; GraphQL выигрывает на сценарии «список без description».
 
@@ -133,7 +144,7 @@ pz12-rest-graphql/
 ├── internal/
 │   ├── store/              # общие данные
 │   ├── service/            # общая логика
-│   └── rest/               # REST handlers
+│   └── rest/               # обработчики REST
 ├── graph/                  # gqlgen (из pz11)
 ├── tests.ps1
 └── README.md

@@ -13,7 +13,7 @@
 
 | Сервис | Порт |
 |--------|------|
-| Go-приложение | 8080 |
+| Go-приложение | 8084 |
 | Prometheus | 9090 |
 | Grafana | 3000 |
 
@@ -27,7 +27,7 @@ cd pz4-monitoring
 .\tests.ps1
 ```
 
-Метрики: http://localhost:8080/metrics
+Метрики: http://localhost:8084/metrics
 
 **2. Prometheus + Grafana (Docker)**
 
@@ -36,9 +36,27 @@ cd pz4-monitoring
 .\generate-traffic.ps1
 ```
 
-- Prometheus: http://localhost:9090 → Targets → `go_app` должен быть **UP**
+- Prometheus: http://localhost:9090 → раздел «Цели» → `go_app` в статусе «работает»
 - Grafana: http://localhost:3000 (логин `admin` / `admin`)
 - Дашборд **PZ4 Go App Monitoring** подхватывается автоматически
+
+## Запуск без PowerShell
+
+Из каталога `pz4-monitoring`.
+
+**Приложение Go (порт 8084):**
+
+```text
+go run ./cmd/server
+```
+
+**Prometheus и Grafana (Docker):**
+
+```text
+docker compose up -d
+```
+
+Перед этим в `monitoring/prometheus.yml` указан target `localhost:8084`. Метрики: http://localhost:8084/metrics
 
 **Prometheus без Docker** (если установлен локально):
 
@@ -72,11 +90,11 @@ prometheus --config.file=monitoring/prometheus.yml
 
 ### `app_student_handler_duration_seconds`
 
-**Как работает:** отдельная histogram только для handler студента — измеряет время бизнес-логики (repo lookup), не весь HTTP-стек.
+**Как работает:** отдельная гистограмма только для обработчика студента — измеряет время бизнес-логики, не весь HTTP-стек.
 
 ### `app_active_requests` (Gauge)
 
-**Как работает:** middleware делает `Inc()` в начале запроса и `Dec()` в defer — показывает, сколько запросов обрабатывается прямо сейчас.
+**Как работает:** промежуточный слой увеличивает счётчик в начале запроса и уменьшает в конце — показывает, сколько запросов обрабатывается прямо сейчас.
 
 ### Дашборд ошибок в Grafana
 

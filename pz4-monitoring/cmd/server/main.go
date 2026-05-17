@@ -20,8 +20,8 @@ func main() {
 
 	rootHandler := httpapi.MetricsMiddleware(mux)
 
-	log.Println("server started on :8080")
-	if err := http.ListenAndServe(":8080", rootHandler); err != nil {
+	log.Println("server started on :8084")
+	if err := http.ListenAndServe(":8084", rootHandler); err != nil {
 		log.Fatal(err)
 	}
 }

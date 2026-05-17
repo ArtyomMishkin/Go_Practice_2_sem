@@ -23,6 +23,26 @@ go run ./cmd/tasks
 curl.exe http://localhost:8098/health
 ```
 
+## Запуск без PowerShell
+
+Из каталога `pz15-vps-deploy` (локально порт **8098**):
+
+CMD:
+
+```text
+set TASKS_PORT=8098
+go run ./cmd/tasks
+```
+
+Linux / macOS:
+
+```text
+export TASKS_PORT=8098
+go run ./cmd/tasks
+```
+
+Проверка: http://localhost:8098/health
+
 ## Деплой на VPS (краткий чеклист)
 
 ### 1. Сборка на ПК

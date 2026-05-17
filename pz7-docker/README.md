@@ -5,7 +5,7 @@
 
 ## Цели
 
-- Собрать Go-сервисы в Docker-образы (builder + runner)
+- Собрать Go-сервисы в Docker-образы (этап сборки и этап запуска)
 - Передавать конфигурацию через переменные окружения
 - Запускать связку **auth** + **tasks** через `docker compose`
 - Понять разницу между image и container, роль `.dockerignore`
@@ -61,6 +61,41 @@ curl.exe -i http://localhost:8088/v1/tasks `
 .\tests.ps1
 ```
 
+## Запуск без PowerShell
+
+Из каталога `pz7-docker`. Нужны **два** терминала.
+
+**Терминал 1 — auth (8087):**
+
+```text
+cd services/auth
+go run ./cmd/auth
+```
+
+**Терминал 2 — tasks (8088):**
+
+CMD:
+
+```text
+cd services/tasks
+set AUTH_BASE_URL=http://localhost:8087
+go run ./cmd/tasks
+```
+
+Linux / macOS:
+
+```text
+cd services/tasks
+export AUTH_BASE_URL=http://localhost:8087
+go run ./cmd/tasks
+```
+
+**Docker Compose** (оба сервиса):
+
+```text
+docker compose -f deploy/docker-compose.yml up --build
+```
+
 ## Сборка образов вручную
 
 ```powershell
@@ -96,7 +131,7 @@ docker run --rm -p 8088:8088 -e TASKS_PORT=8088 -e AUTH_BASE_URL=http://host.doc
 ## Dockerfile (multi-stage)
 
 1. **builder** — `golang:alpine`, `go mod download`, сборка бинарника  
-2. **runner** — `alpine`, только бинарник + CA-сертификаты, `CMD ["./app"]`
+2. **Этап запуска** — `alpine`, только бинарник + CA-сертификаты, `CMD ["./app"]`
 
 Секреты и URL **не** зашиваются в образ — только через `ENV` / compose.
 

@@ -7,7 +7,7 @@ if (-not (Test-Path "$root\certs\server.crt")) {
 Start-Process powershell -ArgumentList @(
     "-NoExit",
     "-Command",
-    "Set-Location '$root'; Write-Host 'HTTPS :8443, redirect HTTP :8080' -ForegroundColor Green; go run ./cmd/server"
+    "Set-Location '$root'; Write-Host 'HTTPS :8443, redirect HTTP :8085' -ForegroundColor Green; go run ./cmd/server"
 )
 
 Write-Host "Сервер запущен. HTTPS: https://localhost:8443"

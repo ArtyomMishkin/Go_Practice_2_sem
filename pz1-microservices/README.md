@@ -77,6 +77,35 @@ $env:USER_SERVICE_URL = "http://localhost:8081"
 go run ./cmd/server
 ```
 
+## Запуск без PowerShell
+
+Из каталога `pz1-microservices`. Нужны **два** терминала.
+
+**Терминал 1 — user-service (порт 8081):**
+
+```text
+cd user-service
+go run ./cmd/server
+```
+
+**Терминал 2 — order-service (порт 8082):**
+
+CMD (Windows):
+
+```text
+cd order-service
+set USER_SERVICE_URL=http://localhost:8081
+go run ./cmd/server
+```
+
+Linux / macOS:
+
+```text
+cd order-service
+export USER_SERVICE_URL=http://localhost:8081
+go run ./cmd/server
+```
+
 ## Тесты
 
 ```powershell
@@ -193,8 +222,8 @@ curl http://localhost:8082/orders/101/full
 
 - **`GET /users`** — `ListAll()` обходит map в repo и отдаёт JSON-массив всех пользователей.
 - **`GET /orders/by-user/{userID}`** — `GetByUserID()` фильтрует заказы по `user_id` без обращения к user-service.
-- **Middleware логирования** — оборачивает `ServeMux`, после каждого запроса пишет в консоль метод, путь и время.
-- **`USER_SERVICE_URL`** — order-service читает адрес user-service из env при старте; если пусто — `http://localhost:8081`.
+- **Промежуточный слой логирования** — оборачивает `ServeMux`, после каждого запроса пишет в консоль метод, путь и время.
+- **`USER_SERVICE_URL`** — order-service читает адрес user-service из переменных окружения при старте; если пусто — `http://localhost:8081`.
 
 ## Объяснение, как обрабатываются ошибки и коды ответа
 
@@ -206,4 +235,4 @@ curl http://localhost:8082/orders/101/full
 - **405 Method Not Allowed** — метод отличен от GET.
 - **502 Bad Gateway** — order-service не смог получить данные от user-service.
 
-В консоли сервисов middleware выводит лог каждого запроса: метод, путь и время выполнения.
+В консоли сервисов промежуточный слой выводит лог каждого запроса: метод, путь и время выполнения.

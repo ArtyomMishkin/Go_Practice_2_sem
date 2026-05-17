@@ -1,15 +1,15 @@
 # pz9-redis-cache
 
 **Студент:** Артём Мишкин  
-**Практическое занятие №9:** Распределённый кэш (Redis), cache-aside
+**Практическое занятие №9:** Распределённый кэш (Redis), стратегия «кэш сбоку»
 
 ## Цели
 
 - Использовать Redis как внешний кэш (не источник истины)
-- Реализовать стратегию **cache-aside**
-- Настроить TTL и **jitter**
+- Реализовать стратегию **кэш сбоку** (cache-aside)
+- Настроить время жизни ключей (TTL) и разброс времени (jitter)
 - Инвалидировать кэш при PATCH/DELETE
-- Graceful degradation при недоступности Redis
+- Плавная деградация при недоступности Redis
 
 ## Порт
 
@@ -27,7 +27,7 @@ pz9-redis-cache/
 │   ├── cache/       # redis, keys, serializer, ttl
 │   ├── config/
 │   ├── httpapi/
-│   ├── service/     # cache-aside logic
+│   ├── service/     # логика кэш сбоку
 │   └── task/
 ├── deploy/redis/docker-compose.yml
 ├── start-redis.ps1
@@ -56,7 +56,23 @@ cd pz9-redis-cache
 .\tests.ps1
 ```
 
-В логах сервера смотрите: `cache hit`, `cache miss`, `cache set`, `cache invalidated`.
+В логах сервера смотрите: попадание в кэш, промах, запись в кэш, сброс кэша.
+
+## Запуск без PowerShell
+
+Из каталога `pz9-redis-cache`.
+
+**1. Redis:**
+
+```text
+docker compose -f deploy/redis/docker-compose.yml up -d
+```
+
+**2. Сервер (порт 8089):**
+
+```text
+go run ./cmd/server
+```
 
 ## API
 
@@ -67,13 +83,13 @@ cd pz9-redis-cache
 | PATCH | `/v1/tasks/{id}` | Обновить + инвалидация кэша |
 | DELETE | `/v1/tasks/{id}` | Удалить + инвалидация кэша |
 
-## Cache-aside (кратко)
+## Кэш сбоку (кратко)
 
 1. Читаем из Redis  
-2. **Hit** → отдаём  
-3. **Miss** → читаем из in-memory repo  
-4. Кладём в Redis с TTL + jitter  
-5. При ошибке Redis → только repo (API не падает)
+2. **Попадание** — отдаём из кэша  
+3. **Промах** — читаем из хранилища в памяти  
+4. Кладём в Redis с TTL и jitter  
+5. При ошибке Redis — только хранилище (API не падает)
 
 ## Ключи Redis
 
@@ -101,16 +117,16 @@ cd pz9-redis-cache
 
 ### 2. Явное логирование
 
-В `task_service.go`: `cache hit`, `cache miss`, `cache set`, `cache invalidated`.
+В `task_service.go`: попадание в кэш, промах, запись, сброс кэша.
 
-### 3. Key-builder и Serializer
+### 3. Построитель ключей и сериализатор
 
-- `internal/cache/keys.go` — `KeyBuilder`  
-- `internal/cache/serializer.go` — JSON marshal/unmarshal  
+- `internal/cache/keys.go` — построитель ключей  
+- `internal/cache/serializer.go` — кодирование и декодирование JSON  
 
 ### 4. Отрицательное кеширование
 
-При 404 по ID в Redis кратко сохраняется маркер `__NOT_FOUND__` (TTL ~30 с + jitter), чтобы не долбить repo.
+При 404 по ID в Redis кратко сохраняется маркер `__NOT_FOUND__` (TTL ~30 с + jitter), чтобы не обращаться к хранилищу повторно.
 
 ## Проверка без Redis
 

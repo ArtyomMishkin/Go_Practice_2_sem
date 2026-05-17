@@ -1,16 +1,16 @@
 # pz8-ci-cd
 
 **Студент:** Артём Мишкин  
-**Практическое занятие №8:** GitHub Actions / GitLab CI для Go backend
+**Практическое занятие №8:** GitHub Actions / GitLab CI для Go
 
 ## Цели
 
 - Понять разницу **CI** (тесты, сборка) и **CD** (доставка, деплой)
-- Настроить автоматический pipeline при push/PR
-- Собирать Docker-образы в CI (на GitHub runners)
+- Настроить автоматический конвейер при отправке кода в репозиторий
+- Собирать Docker-образы в CI (на исполнителях GitHub)
 - Хранить секреты вне репозитория
 
-## На чём строится pipeline
+## На чём строится конвейер CI
 
 CI настроен для сервисов из **pz7-docker**:
 
@@ -21,7 +21,7 @@ CI настроен для сервисов из **pz7-docker**:
 
 ## Файлы CI в корне репозитория
 
-Для работы проекта (практика 8, push на GitHub/GitLab) в **корне** `Go_Practice_2_sem/` должны лежать:
+Для работы проекта (практика 8, отправка на GitHub/GitLab) в **корне** `Go_Practice_2_sem/` должны лежать:
 
 | Файл |
 |------|
@@ -41,22 +41,22 @@ Go_Practice_2_sem/
 
 ## Что делает CI (`ci.yml`)
 
-**Job `test-auth` и `test-tasks`** (параллельно):
+**Задания `test-auth` и `test-tasks`** (параллельно):
 
-1. checkout  
-2. setup Go 1.22  
+1. загрузка кода из репозитория  
+2. установка Go 1.22  
 3. `go mod tidy`  
 4. `go test ./...`  
 5. `go build ./...`  
 
-**Job `docker-build`** (после успешных тестов):
+**Задание `docker-build`** (после успешных тестов):
 
 - `docker build` для auth и tasks  
 - тег образа: `${{ github.sha }}`  
 
 ## Дополнительные задания
 
-### Публикация в registry (`docker-publish.yml`)
+### Публикация в реестр образов (`docker-publish.yml`)
 
 Запуск вручную из GitHub → **Actions** → **Docker Publish**.
 
@@ -75,14 +75,14 @@ Go_Practice_2_sem/
 
 ### Деплой на VPS (описание)
 
-После push в registry на сервере:
+После отправки образа в реестр на сервере:
 
 ```bash
 docker pull ghcr.io/my-org/techip-tasks:<tag>
 cd deploy && docker compose up -d
 ```
 
-Для учебной сдачи достаточно скриншота успешного job в Actions.
+Для учебной сдачи достаточно скриншота успешного задания в GitHub Actions.
 
 ## Локальная проверка (без Docker)
 
@@ -93,18 +93,36 @@ cd pz8-ci-cd
 
 Повторяет шаги test/build из CI за несколько секунд.
 
+## Запуск без PowerShell
+
+Собственных сервисов нет. Локальная проверка — те же шаги, что в CI, для **pz7-docker**:
+
+```text
+cd pz7-docker/services/auth
+go mod tidy
+go test ./...
+go build ./...
+
+cd ../tasks
+go mod tidy
+go test ./...
+go build ./...
+```
+
+Файлы `.github/workflows/` и `.gitlab-ci.yml` должны лежать в **корне** репозитория (см. выше).
+
 ## Запуск на GitHub
 
 1. Закоммитьте и запушьте репозиторий  
 2. Откройте вкладку **Actions**  
-3. Workflow **CI Pipeline** стартует на `main` / `master` и на PR  
+3. Сценарий **CI Pipeline** запускается на ветках `main` / `master` и при запросе на слияние (pull request)  
 
 ## CI vs CD
 
 | | CI | CD |
 |---|----|----|
-| Когда | каждый commit/PR | после успешного CI |
-| Что | test, build, docker build | push registry, deploy |
+| Когда | каждый коммит / запрос на слияние | после успешного CI |
+| Что | тесты, сборка, docker build | публикация в реестр, деплой |
 | В этой работе | `ci.yml` | `docker-publish.yml` + compose на VPS |
 
 ## Секреты — правила
@@ -117,14 +135,14 @@ cd pz8-ci-cd
 
 | Ошибка | Решение |
 |--------|---------|
-| `go test` падает | добавить unit-тесты, проверить `verify-ci.ps1` |
+| `go test` падает | добавить модульные тесты, проверить `verify-ci.ps1` |
 | неверный путь | `working-directory: pz7-docker/services/tasks` |
-| Docker build fail | Dockerfile в каталоге сервиса, контекст сборки = этот каталог |
-| pipeline красный без тестов | временно оставить только `go build`, потом вернуть тесты |
+| ошибка Docker build | Dockerfile в каталоге сервиса, контекст сборки = этот каталог |
+| конвейер красный без тестов | временно оставить только `go build`, потом вернуть тесты |
 
 ## Контрольные вопросы (кратко)
 
-- **Image vs container** — шаблон vs запущенный экземпляр  
+- **Образ и контейнер** — шаблон и запущенный экземпляр  
 - **Зачем CI** — раннее обнаружение поломок, единый стандарт сборки  
-- **Secrets** — доступ pipeline к registry/SSH без утечки в код  
+- **Секреты** — доступ конвейера к реестру/SSH без утечки в код  
 - **Тег образа** — `github.sha` / `CI_COMMIT_SHORT_SHA` для трассировки версии  

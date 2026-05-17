@@ -5,8 +5,8 @@
 
 ## Цели
 
-- Запустить несколько реплик одного stateless-сервиса
-- Настроить **upstream** в NGINX (round-robin)
+- Запустить несколько реплик одного сервиса без локального состояния
+- Настроить **upstream** в NGINX (распределение по кругу)
 - Проверить балансировку по заголовку `X-Instance-ID`
 - Реализовать `GET /health` для проверки живости
 
@@ -20,13 +20,13 @@
 | tasks-3 | 8093 | Локально без Docker |
 | tasks в Docker | 8082 | Внутри сети compose |
 
-> Внешний порт **8090** вместо 8080 — чтобы не конфликтовать с pz3–pz5.
+> Внешний порт **8090** — не пересекается с pz3–pz5 (8083–8085).
 
 ## Структура
 
 ```
 pz10-load-balancer/
-├── services/tasks/          # stateless tasks API
+├── services/tasks/          # API задач без локального состояния
 ├── deploy/lb/
 │   ├── nginx.conf
 │   └── docker-compose.yml   # tasks_1, tasks_2, tasks_3 + nginx
@@ -64,7 +64,24 @@ cd pz10-load-balancer
 .\stop-compose.ps1
 ```
 
-Проверка round-robin:
+## Запуск без PowerShell
+
+**Три копии tasks (8091–8093)** — три терминала, из `services/tasks`:
+
+CMD: `set INSTANCE_ID=tasks-1` и `set APP_PORT=8091`, затем `go run ./cmd/server`  
+(для копий 2 и 3 — порты 8092, 8093).
+
+Linux / macOS: `export INSTANCE_ID=tasks-1` и `export APP_PORT=8091`, затем `go run ./cmd/server`.
+
+**NGINX + Docker:**
+
+```text
+docker compose -f deploy/lb/docker-compose.yml up --build
+```
+
+Вход: http://localhost:8090
+
+Проверка распределения по кругу:
 
 ```powershell
 1..10 | ForEach-Object { curl.exe -s -D - http://localhost:8090/whoami -o NUL | Select-String "X-Instance-ID" }
@@ -101,24 +118,24 @@ upstream tasks_backend {
 
 ### 2. Логирование входящих запросов
 
-Middleware в `cmd/server/main.go` пишет `instance`, method, path, remote, duration.
+Промежуточный слой в `cmd/server/main.go` пишет в лог: инстанс, метод, путь, адрес клиента, длительность.
 
 ### 3. GET /whoami
 
-Отдельный endpoint для проверки, какой инстанс ответил.
+Отдельный метод `/whoami` для проверки, какая копия ответила.
 
-### 4. Shared-state (конспект)
+### 4. Общее состояние (конспект)
 
-Для горизонтального масштабирования сервис должен быть **stateless**:
+Для горизонтального масштабирования сервис должен быть **без локального состояния**:
 
 - данные — в общей БД или Redis (см. pz9-redis-cache);
-- in-memory состояние в одной реплике ломает балансировку;
+- состояние в памяти одной реплики ломает балансировку;
 - сессии — во внешнем хранилище, не в памяти процесса.
 
 ## CI vs отчёт
 
 - Скриншоты: `docker compose ps`, curl с разными `X-Instance-ID`
-- Stateless: одна и та же задача с любой реплики
+- Без локального состояния: одна и та же задача с любой реплики
 
 ## Контрольные вопросы (кратко)
 
@@ -126,6 +143,6 @@ Middleware в `cmd/server/main.go` пишет `instance`, method, path, remote, 
 |--------|--------|
 | Вертикальное vs горизонтальное | Больше CPU/RAM vs больше реплик |
 | Зачем LB | Одна точка входа, распределение нагрузки |
-| Upstream | Группа backend-серверов за NGINX |
-| Stateless | Нет локальной сессии — любая реплика может ответить |
+| Upstream (NGINX) | Группа серверов приложения за балансировщиком |
+| Без локального состояния | Нет сессии в памяти процесса — любая реплика может ответить |
 | X-Instance-ID | Видно, какой инстанс обработал запрос |

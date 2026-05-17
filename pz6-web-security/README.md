@@ -19,7 +19,7 @@ pz6-web-security/
 │   ├── auth/          # CSRF-токены и session cookie
 │   ├── config/        # SERVER_ADDR, SECURE_COOKIE
 │   ├── httpapi/       # HTTP-обработчики
-│   └── store/         # In-memory профили
+│   └── store/         # профили в памяти
 ├── templates/         # HTML-шаблоны
 ├── start-server.ps1
 └── tests.ps1
@@ -34,7 +34,7 @@ cd pz6-web-security
 
 Откройте в браузере: http://localhost:8086/login
 
-По умолчанию сервер слушает порт **8086** (чтобы не конфликтовать с pz3–pz5 на 8080).
+По умолчанию сервер слушает порт **8086** (чтобы не конфликтовать с pz3–pz5 на 8083–8085).
 
 Для cookie с флагом `Secure` (нужен HTTPS):
 
@@ -42,6 +42,30 @@ cd pz6-web-security
 $env:SECURE_COOKIE = "true"
 .\start-server.ps1
 ```
+
+## Запуск без PowerShell
+
+Из каталога `pz6-web-security` (порт **8086**):
+
+```text
+go run ./cmd/server
+```
+
+С флагом `Secure` для cookie (CMD):
+
+```text
+set SECURE_COOKIE=true
+go run ./cmd/server
+```
+
+Linux / macOS:
+
+```text
+export SECURE_COOKIE=true
+go run ./cmd/server
+```
+
+Браузер: http://localhost:8086/login
 
 ## API / маршруты
 
@@ -68,7 +92,7 @@ $env:SECURE_COOKIE = "true"
 
 ### 3. Ротация CSRF после POST
 
-После успешного `POST /profile` и `POST /comments` генерируется новый CSRF-токен в store — старый токен из формы больше не принимается.
+После успешного `POST /profile` и `POST /comments` генерируется новый CSRF-токен в хранилище — старый токен из формы больше не принимается.
 
 ### 4. Страница комментариев
 

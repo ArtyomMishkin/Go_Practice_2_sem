@@ -6,13 +6,13 @@
 
 # Информация о проекте
 
-**pz5-security** — HTTPS-сервис на Go с PostgreSQL. Защита транспорта (TLS) и данных (параметризованные SQL-запросы, prepared statements).
+**pz5-security** — HTTPS-сервис на Go с PostgreSQL. Защита транспорта (TLS) и данных (параметризованные SQL-запросы, подготовленные выражения).
 
 ## Порты
 
 | Сервис | Порт |
 |--------|------|
-| HTTP → HTTPS redirect | 8080 |
+| HTTP → HTTPS redirect | 8085 |
 | HTTPS API | 8443 |
 | PostgreSQL | 5432 |
 
@@ -24,7 +24,7 @@ cd pz5-security
 # 1. База данных
 .\start-db.ps1
 
-# 2. TLS-сертификаты (self-signed, через Go)
+# 2. TLS-сертификаты (самоподписанные, через Go)
 .\generate-certs.ps1
 
 # 3. Сервер
@@ -32,6 +32,35 @@ cd pz5-security
 
 # 4. Тесты
 .\tests.ps1
+```
+
+## Запуск без PowerShell
+
+Из каталога `pz5-security`.
+
+**1. PostgreSQL:**
+
+```text
+docker compose up -d
+```
+
+**2. Сертификаты** (если папки `certs/` ещё нет — см. `generate-certs.ps1` или методичку):
+
+```text
+go run ./cmd/gencert
+```
+
+**3. Сервер** — HTTPS **8443**, редирект с HTTP **8085**:
+
+```text
+go run ./cmd/server
+```
+
+Проверка (curl с игнором самоподписанного сертификата):
+
+```text
+curl -k https://localhost:8443/health
+curl -s -o NUL -w "%{http_code}" http://localhost:8085/health
 ```
 
 ## API (HTTPS)
@@ -43,33 +72,33 @@ cd pz5-security
 | GET | `/students/by-email?email=...` | студент по email |
 | GET | `/students/unsafe?id=...` | **демо** небезопасного SQL |
 
-Все запросы: `curl -k` (self-signed сертификат).
+Все запросы: `curl -k` (самоподписанный сертификат).
 
 ## Переменные окружения
 
 | Переменная | По умолчанию |
 |------------|--------------|
 | `HTTPS_ADDR` | `:8443` |
-| `HTTP_REDIRECT_ADDR` | `:8080` |
+| `HTTP_REDIRECT_ADDR` | `:8085` |
 | `TLS_CERT_FILE` | `certs/server.crt` |
 | `TLS_KEY_FILE` | `certs/server.key` |
 | `DB_DSN` | `postgres://postgres:postgres@localhost:5432/study_security?sslmode=disable` |
 
 ## Дополнительные задания (выполнено)
 
-### HTTP → HTTPS редирект (:8080)
+### HTTP → HTTPS редирект (:8085)
 
-**Как работает:** отдельный HTTP-сервер на `:8080` отвечает `301 Moved Permanently` на `https://localhost:8443` + тот же путь. Любой запрос `http://localhost:8080/...` перенаправляется на HTTPS.
+**Как работает:** отдельный HTTP-сервер на `:8085` отвечает `301 Moved Permanently` на `https://localhost:8443` + тот же путь. Любой запрос `http://localhost:8085/...` перенаправляется на HTTPS.
 
-### Конфигурация из env
+### Конфигурация из переменных окружения
 
-**Как работает:** `internal/config` читает адрес, DSN и пути к сертификатам из переменных окружения. Без env — значения по умолчанию из таблицы выше.
+**Как работает:** `internal/config` читает адрес, DSN и пути к сертификатам из переменных окружения. Если не заданы — значения по умолчанию из таблицы выше.
 
 ### GET /students/by-email
 
-**Как работает:** email передаётся как query-параметр, проверяется regex (allow-list формата), затем выборка через **prepared statement** с `$1` — инъекция в SQL невозможна.
+**Как работает:** email передаётся как query-параметр, проверяется по белому списку формата, затем выборка через **подготовленное выражение** с `$1` — инъекция в SQL невозможна.
 
-### Allow-list валидация
+### Валидация по белому списку
 
 **Как работает:** `id` — только положительное целое ≤ 1e9; `email` — проверка regexp и длины ≤ 254. Некорректный ввод → `400 Bad Request` до обращения к БД.
 
@@ -83,7 +112,7 @@ cd pz5-security
 // ОПАСНО — конкатенация
 query := "SELECT ... WHERE id = " + rawID
 
-// БЕЗОПАСНО — placeholder + prepared statement
+// БЕЗОПАСНО — плейсхолдер + подготовленное выражение
 stmt.QueryRow(id)  // SQL: ... WHERE id = $1
 ```
 
@@ -111,7 +140,7 @@ pz5-security/
 | HTTP | HTTPS |
 |------|-------|
 | данные открыты | шифрование TLS |
-| порт 8080 (редирект) | порт 8443 (основной API) |
+| порт 8085 (редирект) | порт 8443 (основной API) |
 | нет проверки сервера | сертификат server.crt/key |
 
-Self-signed сертификат подходит для учёбы; браузер/curl покажут предупреждение — для curl используйте `-k`.
+Самоподписанный сертификат подходит для учёбы; браузер и curl покажут предупреждение — для curl используйте `-k`.

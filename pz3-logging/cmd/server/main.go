@@ -27,8 +27,8 @@ func main() {
 
 	rootHandler := httpapi.LoggingMiddleware(logger, mux)
 
-	logger.Info("server is starting", zap.String("addr", ":8080"))
-	if err := http.ListenAndServe(":8080", rootHandler); err != nil {
+	logger.Info("server is starting", zap.String("addr", ":8083"))
+	if err := http.ListenAndServe(":8083", rootHandler); err != nil {
 		logger.Fatal("server failed", zap.Error(err))
 	}
 }

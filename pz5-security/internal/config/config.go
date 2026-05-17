@@ -20,7 +20,7 @@ func env(key, fallback string) string {
 func New() Config {
 	return Config{
 		HTTPSAddr:        env("HTTPS_ADDR", ":8443"),
-		HTTPRedirectAddr: env("HTTP_REDIRECT_ADDR", ":8080"),
+		HTTPRedirectAddr: env("HTTP_REDIRECT_ADDR", ":8085"),
 		CertFile:         env("TLS_CERT_FILE", "certs/server.crt"),
 		KeyFile:          env("TLS_KEY_FILE", "certs/server.key"),
 		DSN: env("DB_DSN",

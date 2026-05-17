@@ -11,18 +11,18 @@
 | **pz10-load-balancer** | Тот же сервис tasks, но REST; здесь — **GraphQL**-фасад |
 | **pz9-redis-cache** | Кэш задач по ID; GraphQL читает тот же тип сущности |
 
-GraphQL **не дублирует** REST-обработчики: используется общий слой `internal/service` + `internal/store` (как рекомендует методичка — единый repository/service, разные протоколы).
+GraphQL **не дублирует** REST-обработчики: используется общий сервисный слой и хранилище (как в методичке — одна бизнес-логика, разные протоколы).
 
 ## Цели
 
 - Схема GraphQL: `Task`, `Query`, `Mutation`
 - Генерация сервера через **gqlgen**
-- Playground для проверки запросов
+- Песочница GraphQL для проверки запросов
 - Отличие от REST: клиент сам выбирает поля ответа
 
 ## Порт
 
-**8094** — Playground `http://localhost:8094/`, endpoint `http://localhost:8094/query`
+**8094** — песочница `http://localhost:8094/`, точка входа `http://localhost:8094/query`
 
 ## Структура
 
@@ -34,7 +34,7 @@ pz11-graphql/
 │   ├── generated.go
 │   └── model/
 ├── internal/
-│   ├── store/          # in-memory (источник истины для учебки)
+│   ├── store/          # в памяти (источник истины для учебки)
 │   ├── service/        # общая бизнес-логика
 │   └── auth/           # Bearer для mutations
 ├── cmd/graphql/main.go
@@ -52,7 +52,25 @@ cd pz11-graphql
 .\start-server.ps1
 ```
 
-Откройте Playground: http://localhost:8094/
+Откройте песочницу: http://localhost:8094/
+
+## Запуск без PowerShell
+
+Из каталога `pz11-graphql` (порт **8094**).
+
+После изменения `graph/schema.graphqls`:
+
+```text
+go run github.com/99designs/gqlgen generate
+```
+
+Сервер:
+
+```text
+go run ./cmd/graphql
+```
+
+Песочница: http://localhost:8094/
 
 ## Схема
 
@@ -76,7 +94,7 @@ type Mutation {
 }
 ```
 
-## Playground — примеры
+## Песочница — примеры
 
 **Список:**
 
@@ -105,7 +123,7 @@ query GetTask($id: ID!) {
 
 Variables: `{ "id": "t_001" }`
 
-**Создание** (нужен заголовок `Authorization: Bearer demo-token` в Playground):
+**Создание** (нужен заголовок `Authorization: Bearer demo-token` в песочнице):
 
 ```graphql
 mutation Create($input: CreateTaskInput!) {
@@ -120,9 +138,9 @@ mutation Create($input: CreateTaskInput!) {
 ## Дополнительно: авторизация mutations
 
 - **Query** — без токена  
-- **Mutation** — заголовок `Authorization: Bearer demo-token`  
+- **Мутация** — заголовок `Authorization: Bearer demo-token`  
 
-В Playground: вкладка **Headers**:
+В песочнице: вкладка **Headers** (заголовки):
 
 ```json
 {
@@ -136,7 +154,7 @@ mutation Create($input: CreateTaskInput!) {
 .\tests.ps1
 ```
 
-## gqlgen workflow
+## Порядок работы с gqlgen
 
 1. Редактировать `graph/schema.graphqls`
 2. `.\generate.ps1`
@@ -147,12 +165,12 @@ mutation Create($input: CreateTaskInput!) {
 
 | | REST (pz7/pz10) | GraphQL |
 |---|-----------------|---------|
-| Endpoint | много URL | один `/query` |
+| Точка входа | много URL | один `/query` |
 | Данные | фиксированный JSON | клиент выбирает поля |
-| Over-fetching | возможен | меньше лишних полей |
+| Лишние поля в ответе | возможны | меньше лишних полей |
 
 ## Отчёт
 
-- Скрин Playground: `tasks`, `createTask`, `updateTask`
+- Скрин песочницы: `tasks`, `createTask`, `updateTask`
 - Схема + сгенерированные файлы
 - Пояснение связи с tasks из pz7/pz10
