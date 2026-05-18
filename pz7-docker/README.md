@@ -128,6 +128,59 @@ docker run --rm -p 8088:8088 -e TASKS_PORT=8088 -e AUTH_BASE_URL=http://host.doc
 
 В compose: `AUTH_BASE_URL=http://auth:8087` — обращение по имени сервиса в docker-сети, не через `localhost`.
 
+## Примеры запросов и ответов
+
+### auth :8087 — GET /health
+
+```bash
+curl http://localhost:8087/health
+```
+
+Ответ (`HTTP 200`):
+
+```json
+{"status":"ok","service":"auth"}
+```
+
+### auth — GET /v1/validate
+
+```bash
+curl -H "Authorization: Bearer demo-token" http://localhost:8087/v1/validate
+```
+
+Ответ (`HTTP 200`): `{"status":"ok","subject":"demo-user"}`
+
+Без токена или с неверным → `HTTP 401`, тело `{"error":"unauthorized"}`
+
+### tasks :8088 — GET /v1/tasks
+
+Без заголовка:
+
+```bash
+curl http://localhost:8088/v1/tasks
+```
+
+Ответ (`HTTP 401`): `{"error":"missing authorization"}`
+
+С токеном:
+
+```bash
+curl -H "Authorization: Bearer demo-token" -H "X-Request-ID: pz7-001" http://localhost:8088/v1/tasks
+```
+
+Ответ (`HTTP 200`):
+
+```json
+{
+  "request_id": "pz7-001",
+  "tasks": [
+    {"id": 1, "title": "Read Dockerfile guide", "status": "done"},
+    {"id": 2, "title": "Build multi-stage image", "status": "in_progress"},
+    {"id": 3, "title": "Run docker compose", "status": "todo"}
+  ]
+}
+```
+
 ## Dockerfile (multi-stage)
 
 1. **builder** — `golang:alpine`, `go mod download`, сборка бинарника  

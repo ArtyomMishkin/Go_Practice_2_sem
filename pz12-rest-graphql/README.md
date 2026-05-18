@@ -76,6 +76,38 @@ query {
 
 **Вывод:** для списка GraphQL отдаёт меньше лишних данных.
 
+Ответ REST (`HTTP 200`):
+
+```json
+[
+  {
+    "id": "t_001",
+    "title": "Первая задача",
+    "description": "Учебный пример",
+    "done": false
+  },
+  {
+    "id": "t_002",
+    "title": "Вторая задача",
+    "description": "Проверка API",
+    "done": true
+  }
+]
+```
+
+Ответ GraphQL (`HTTP 200`):
+
+```json
+{
+  "data": {
+    "tasks": [
+      {"id": "t_001", "title": "Первая задача", "done": false},
+      {"id": "t_002", "title": "Вторая задача", "done": true}
+    ]
+  }
+}
+```
+
 ### 2. Детали задачи
 
 **REST:** `GET /v1/tasks/t_001`
@@ -105,6 +137,17 @@ curl.exe -X POST http://localhost:8095/v1/tasks `
 
 **GraphQL:** мутация `createTask` в песочнице GraphQL.
 
+Ответ REST (`HTTP 201`):
+
+```json
+{
+  "id": "t_003",
+  "title": "Сравнение REST и GraphQL",
+  "description": "ПЗ12",
+  "done": false
+}
+```
+
 ### 4. Обновление
 
 **REST:** `PATCH /v1/tasks/t_001` с `{"done":true}`
@@ -116,6 +159,16 @@ curl.exe -X POST http://localhost:8095/v1/tasks `
 | Ситуация | REST | GraphQL |
 |----------|------|---------|
 | Неизвестный id | `404` + `{"error":"task not found"}` | `200` + `"task": null` |
+
+Пример REST:
+
+```bash
+curl http://localhost:8095/v1/tasks/unknown
+```
+
+Ответ (`HTTP 404`): `{"error":"task not found"}`
+
+Пример GraphQL: `task(id: "unknown")` → `"data": { "task": null }`
 
 ## Итоговая таблица (для отчёта)
 

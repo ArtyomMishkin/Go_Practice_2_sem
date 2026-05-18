@@ -121,6 +121,46 @@ received event=task.created task_id=t_001 ts=... request_id=pz13-001
 
 Заголовки: `Authorization: Bearer demo-token`, `X-Request-ID`.
 
+## Примеры запросов и ответов
+
+Порт **8096**.
+
+### GET /health
+
+```bash
+curl http://localhost:8096/health
+```
+
+Ответ (`HTTP 200`):
+
+```json
+{"status":"ok","service":"tasks"}
+```
+
+### POST /v1/tasks
+
+```bash
+curl -X POST http://localhost:8096/v1/tasks \
+  -H "Authorization: Bearer demo-token" \
+  -H "X-Request-ID: pz13-001" \
+  -H "Content-Type: application/json" \
+  -d "{\"title\":\"Новая задача\",\"description\":\"Тест RabbitMQ\"}"
+```
+
+Ответ (`HTTP 201`):
+
+```json
+{
+  "id": "t_001",
+  "title": "Новая задача",
+  "description": "Тест RabbitMQ"
+}
+```
+
+В логах **worker** появится строка с событием `task.created` (см. формат JSON ниже).
+
+Без токена → `HTTP 401`, `{"error":"unauthorized"}`.
+
 ## Дополнительно
 
 ### Режим публикации (`PUBLISH_MODE`)

@@ -51,7 +51,12 @@ func (h *Handler) GetStudentByID(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if errors.Is(err, student.ErrStudentNotFound) {
-			http.Error(w, "student not found", http.StatusNotFound)
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"error": "студент с таким id не найден в системе",
+				"id":    id,
+			})
 			return
 		}
 		http.Error(w, "internal error", http.StatusInternalServerError)

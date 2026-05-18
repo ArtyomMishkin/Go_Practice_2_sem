@@ -103,16 +103,43 @@ protoc --go_out=. --go-grpc_out=. proto/student.proto
 
 **Как работает:** в сообщении `Student` добавлено поле `specialization`. После изменения `.proto` нужен `.\generate.ps1` — Go-структуры обновляются автоматически, поле доступно в API и в тестовых данных.
 
-### Сравнение с REST (практика 1)
+## Примеры запросов и ответов
 
-| REST (`pz1-microservices`) | gRPC (`pz2-grpc`) |
-|----------------------------|-------------------|
-| `GET /users/1` | `GetStudentByID` |
-| `GET /users` | `ListStudents` |
-| `POST /users` (если бы был) | `CreateStudent` |
-| JSON вручную | protobuf |
-| curl | gRPC-клиент |
-| порты 8081/8082 | порт 50051 |
+Клиент: `go run ./cmd/client` (сервер на порту **50051**). Ниже — смысл ответов в JSON-виде (по факту идёт protobuf).
+
+### Ping
+
+Запрос: `Ping(message: "hello grpc")`  
+Ответ: `{"message":"Server received: hello grpc"}`
+
+### GetStudentByID id=1
+
+Ответ:
+
+```json
+{
+  "student": {
+    "id": 1,
+    "full_name": "Иванов Иван Иванович",
+    "group": "ИТТ-01-25",
+    "email": "ivanov@example.com",
+    "specialization": "Программная инженерия"
+  }
+}
+```
+
+### GetStudentByID id=999
+
+Ошибка gRPC: код **`NotFound`**, сообщение вроде `student not found` (не HTTP 404).
+
+### ListStudents
+
+Ответ: массив из **3** студентов (id 1–3) в поле `students`.
+
+### CreateStudent
+
+Запрос: ФИО, группа, email, specialization.  
+Ответ: созданный студент с новым `id` (клиент в тесте создаёт **Козлова**, обычно `id=4`).
 
 ## gRPC-ошибки
 

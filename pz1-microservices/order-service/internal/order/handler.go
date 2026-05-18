@@ -32,7 +32,7 @@ func (h *Handler) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 
 	order, err := h.repo.GetByID(id)
 	if err != nil {
-		http.Error(w, "order not found", http.StatusNotFound)
+		writeOrderNotFound(w, id)
 		return
 	}
 
@@ -54,7 +54,7 @@ func (h *Handler) GetOrderWithUser(w http.ResponseWriter, r *http.Request) {
 
 	order, err := h.repo.GetByID(id)
 	if err != nil {
-		http.Error(w, "order not found", http.StatusNotFound)
+		writeOrderNotFound(w, id)
 		return
 	}
 
@@ -88,4 +88,13 @@ func (h *Handler) GetOrdersByUser(w http.ResponseWriter, r *http.Request) {
 	orders := h.repo.GetByUserID(userID)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(orders)
+}
+
+func writeOrderNotFound(w http.ResponseWriter, id int64) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusNotFound)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"error": "заказ с таким id не найден в системе",
+		"id":    id,
+	})
 }

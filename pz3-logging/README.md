@@ -6,7 +6,7 @@
 
 # Информация о проекте
 
-**pz3-logging** — HTTP-сервис на Go с structured logging через **zap**.  
+**pz3-logging** — HTTP-сервис на Go со структурированным логированием через **zap**.  
 Эндпоинты: проверка здоровья и работа со студентами. Все запросы логируются с полями method, path, status_code, duration, request_id.
 
 ## Порты
@@ -89,6 +89,57 @@ go run ./cmd/server
 | GET | `/health` | статус сервиса |
 | GET | `/students/{id}` | студент по ID |
 | POST | `/students` | создать студента (JSON body) |
+
+## Примеры запросов и ответов
+
+Порт **8083**. В памяти студенты **id 1–3**; **999** — проверка 404.
+
+### GET /health
+
+```bash
+curl http://localhost:8083/health
+```
+
+Ответ (`HTTP 200`):
+
+```json
+{"status":"ok"}
+```
+
+### GET /students/1
+
+Ответ (`HTTP 200`):
+
+```json
+{
+  "id": 1,
+  "full_name": "Иванов Иван Иванович",
+  "group": "ИТТ-01-25",
+  "email": "ivanov@example.com"
+}
+```
+
+Заголовок ответа: `X-Request-ID: <uuid>`.
+
+### GET /students/999
+
+Ответ (`HTTP 404`):
+
+```json
+{"error":"студент с таким id не найден в системе","id":999}
+```
+
+### POST /students
+
+```bash
+curl -X POST http://localhost:8083/students \
+  -H "Content-Type: application/json" \
+  -d '{"full_name":"Козлов Дмитрий","group":"ИТТ-04-25","email":"kozlov@example.com"}'
+```
+
+Ответ (`HTTP 201`): JSON созданного студента с новым `id`.
+
+Дубликат email → `HTTP 409`, текст `email already exists`.
 
 ## Дополнительные задания (выполнено)
 

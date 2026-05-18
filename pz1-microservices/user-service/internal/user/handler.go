@@ -39,7 +39,12 @@ func (h *Handler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 
 	u, err := h.repo.GetByID(id)
 	if err != nil {
-		http.Error(w, "user not found", http.StatusNotFound)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"error": "пользователь с таким id не найден в системе",
+			"id":    id,
+		})
 		return
 	}
 

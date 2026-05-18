@@ -57,7 +57,12 @@ func (h *Handler) GetStudentByID(w http.ResponseWriter, r *http.Request) {
 	err := h.stmtByID.QueryRow(id).Scan(&st.ID, &st.FullName, &st.StudyGroup, &st.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			http.Error(w, "student not found", http.StatusNotFound)
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"error": "студент с таким id не найден в базе",
+				"id":    id,
+			})
 			return
 		}
 		http.Error(w, "internal server error", http.StatusInternalServerError)

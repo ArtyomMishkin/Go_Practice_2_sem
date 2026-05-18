@@ -71,7 +71,12 @@ func (h *Handler) GetStudentByID(w http.ResponseWriter, r *http.Request) {
 				zap.Int64("student_id", id),
 				zap.Error(err),
 			)
-			http.Error(w, "student not found", http.StatusNotFound)
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"error": "студент с таким id не найден в системе",
+				"id":    id,
+			})
 			return
 		}
 		h.log.Error("get student failed",

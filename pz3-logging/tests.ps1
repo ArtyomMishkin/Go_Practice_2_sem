@@ -1,27 +1,20 @@
 # Запустите сервер: .\start-server.ps1
+#
+# В памяти есть студенты id 1–3. id 999 не заведён — проверка 404.
 
-echo "=== GET /health ==="
-curl.exe -s -D - http://localhost:8083/health
-echo ""
+function Show-Response($title, $url, $method = "GET", $body = $null) {
+    Write-Host "=== $title ==="
+    if ($body) {
+        curl.exe -s -w "`nHTTP: %{http_code}`n" -X $method $url -H "Content-Type: application/json" -d $body
+    } else {
+        curl.exe -s -w "`nHTTP: %{http_code}`n" $url
+    }
+    Write-Host ""
+}
 
-echo "=== GET /students/1 ==="
-curl.exe -s -D - http://localhost:8083/students/1
-echo ""
-
-echo "=== GET /students/abc (400) ==="
-curl.exe -s -w " HTTP:%{http_code}" http://localhost:8083/students/abc
-echo ""
-echo ""
-
-echo "=== GET /students/999 (404) ==="
-curl.exe -s -w " HTTP:%{http_code}" http://localhost:8083/students/999
-echo ""
-echo ""
-
-echo "=== POST /students ==="
-curl.exe -s -D - -X POST http://localhost:8083/students -H "Content-Type: application/json" -d "{\"full_name\":\"Козлов Дмитрий\",\"group\":\"ИТТ-04-25\",\"email\":\"kozlov@example.com\"}"
-echo ""
-
-echo "=== POST /students (дубликат email, 409) ==="
-curl.exe -s -w " HTTP:%{http_code}" -X POST http://localhost:8083/students -H "Content-Type: application/json" -d "{\"full_name\":\"Test\",\"group\":\"G\",\"email\":\"kozlov@example.com\"}"
-echo ""
+Show-Response "GET /health" "http://localhost:8083/health"
+Show-Response "GET /students/1 — есть в системе" "http://localhost:8083/students/1"
+Show-Response "GET /students/abc — неверный id (ожидается 400)" "http://localhost:8083/students/abc"
+Show-Response "GET /students/999 — нет в системе (ожидается 404)" "http://localhost:8083/students/999"
+Show-Response "POST /students — создать" "http://localhost:8083/students" "POST" '{"full_name":"Козлов Дмитрий","group":"ИТТ-04-25","email":"kozlov@example.com"}'
+Show-Response "POST /students — дубликат email (ожидается 409)" "http://localhost:8083/students" "POST" '{"full_name":"Test","group":"G","email":"kozlov@example.com"}'

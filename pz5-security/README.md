@@ -74,6 +74,67 @@ curl -s -o NUL -w "%{http_code}" http://localhost:8085/health
 
 Все запросы: `curl -k` (самоподписанный сертификат).
 
+## Примеры запросов и ответов
+
+HTTPS **8443**. В БД после `init.sql` студенты **id 1–3**.
+
+### GET /health
+
+```bash
+curl -k https://localhost:8443/health
+```
+
+Ответ (`HTTP 200`):
+
+```json
+{"status":"ok","scheme":"https"}
+```
+
+### HTTP → HTTPS (порт 8085)
+
+```bash
+curl -s -o NUL -w "%{http_code}" http://localhost:8085/health
+```
+
+Ответ: **`301`** → `https://localhost:8443/health`
+
+### GET /students?id=1
+
+Ответ (`HTTP 200`):
+
+```json
+{
+  "id": 1,
+  "full_name": "Иванов Иван Иванович",
+  "study_group": "ИТТ-01-25",
+  "email": "ivanov@example.com"
+}
+```
+
+### GET /students?id=999
+
+Ответ (`HTTP 404`):
+
+```json
+{"error":"студент с таким id не найден в базе","id":999}
+```
+
+### GET /students/by-email?email=ivanov@example.com
+
+Ответ (`HTTP 200`): тот же JSON студента.
+
+### GET /students/unsafe?id=1 (демо)
+
+Ответ (`HTTP 200`):
+
+```json
+{
+  "warning": "unsafe SQL concatenation — do not use in production",
+  "query": "SELECT ... WHERE id = 1",
+  "student": { "id": 1, "full_name": "...", "study_group": "...", "email": "..." }
+}
+```
+
 ## Переменные окружения
 
 | Переменная | По умолчанию |

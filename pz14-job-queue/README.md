@@ -30,7 +30,32 @@ Authorization: Bearer demo-token
 {"task_id": "t_001"}
 ```
 
-Ответ: `202 Accepted` + `{"status":"accepted","task_id":"..."}`
+## Примеры запросов и ответов
+
+Порт **8097**.
+
+### POST /v1/jobs/process-task
+
+```bash
+curl -i -X POST http://localhost:8097/v1/jobs/process-task \
+  -H "Authorization: Bearer demo-token" \
+  -H "Content-Type: application/json" \
+  -d "{\"task_id\":\"t_001\"}"
+```
+
+Ответ (`HTTP 202`):
+
+```json
+{"status":"accepted","task_id":"t_001"}
+```
+
+В логах worker — успешная обработка, **ack**.
+
+### task_id=t_fail
+
+Тот же запрос с `"task_id":"t_fail"` → после **3** попыток сообщение уходит в очередь **DLQ** (`task_jobs_dlq`).
+
+Без токена → `HTTP 401`, `{"error":"unauthorized"}`.
 
 ## Запуск
 

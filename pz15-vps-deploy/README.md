@@ -43,6 +43,20 @@ go run ./cmd/tasks
 
 Проверка: http://localhost:8098/health
 
+## Примеры запросов и ответов
+
+### GET /health
+
+```bash
+curl http://localhost:8098/health
+```
+
+Ответ (`HTTP 200`):
+
+```json
+{"status":"ok"}
+```
+
 ## Деплой на VPS (краткий чеклист)
 
 ### 1. Сборка на ПК

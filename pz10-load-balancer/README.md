@@ -89,6 +89,39 @@ docker compose -f deploy/lb/docker-compose.yml up --build
 
 Должны чередоваться `tasks-1`, `tasks-2`, `tasks-3`.
 
+## Примеры запросов и ответов
+
+Через NGINX (**8090**) или напрямую на реплику (**8091**).
+
+### GET /health
+
+```bash
+curl http://localhost:8090/health
+```
+
+Ответ (`HTTP 200`):
+
+```json
+{"status":"ok","instance":"tasks-1"}
+```
+
+Заголовок: `X-Instance-ID: tasks-1` (номер реплики меняется при балансировке).
+
+### GET /whoami
+
+Ответ (`HTTP 200`): `{"instance":"tasks-2"}`
+
+### GET /v1/tasks
+
+Ответ (`HTTP 200`):
+
+```json
+[
+  {"id": 1, "title": "Изучить NGINX"},
+  {"id": 2, "title": "Освоить load balancing"}
+]
+```
+
 ## Проверка отказоустойчивости
 
 ```powershell

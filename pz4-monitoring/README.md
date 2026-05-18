@@ -7,7 +7,7 @@
 # Информация о проекте
 
 **pz4-monitoring** — HTTP-сервис на Go с экспортом метрик Prometheus и дашбордом Grafana.  
-Собираются счётчики запросов и ошибок, гистограммы длительности, метрики по студентам и gauge активных запросов.
+Собираются счётчики запросов и ошибок, гистограммы длительности, метрики по студентам и датчик активных запросов.
 
 ## Порты
 
@@ -71,6 +71,44 @@ prometheus --config.file=monitoring/prometheus.yml
 | GET | `/health` |
 | GET | `/students/{id}` |
 | GET | `/metrics` |
+
+## Примеры запросов и ответов
+
+Порт **8084**. Формат как в pz3 (студенты **1–3** в памяти).
+
+### GET /health
+
+Ответ (`HTTP 200`): `{"status":"ok"}`
+
+### GET /students/1
+
+Ответ (`HTTP 200`):
+
+```json
+{
+  "id": 1,
+  "full_name": "Иванов Иван Иванович",
+  "group": "ИТТ-01-25",
+  "email": "ivanov@example.com"
+}
+```
+
+### GET /students/999
+
+Ответ (`HTTP 404`):
+
+```json
+{"error":"студент с таким id не найден в системе","id":999}
+```
+
+### GET /metrics
+
+Ответ (`HTTP 200`): текст Prometheus, фрагмент:
+
+```text
+app_http_requests_total{method="GET",path="/health"} 1
+app_http_errors_total{...} 0
+```
 
 ## Метрики (база)
 

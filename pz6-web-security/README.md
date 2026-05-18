@@ -80,6 +80,26 @@ go run ./cmd/server
 | POST | `/comments` | Добавить комментарий (проверка CSRF) |
 | GET | `/demo/unsafe` | **Учебный** небезопасный HTML (конкатенация строк) |
 
+## Примеры запросов и ответов
+
+Порт **8086**. Ответы в основном **HTML**, не JSON.
+
+| Запрос | Код | Что в ответе |
+|--------|-----|----------------|
+| `GET /login` | 302 | Редирект на `/profile`, cookie `session_id` |
+| `GET /profile` | 200 | HTML-форма с полем имени и скрытым `csrf_token` |
+| `POST /profile` без CSRF | 403 | текст `invalid csrf token` |
+| `POST /profile` с CSRF | 302 | Редирект, имя сохранено |
+| `GET /hello` | 200 | HTML, имя из шаблона (экранировано) |
+| `POST /comments` с `<script>...` | 302 | Комментарий в списке как **текст**, не выполняется |
+| `GET /demo/unsafe?name=<b>XSS</b>` | 200 | HTML с **неэкранированным** вставленным именем (демо XSS) |
+
+Пример небезопасного URL:
+
+```text
+http://localhost:8086/demo/unsafe?name=<script>alert('xss')</script>
+```
+
 ## Дополнительные задания
 
 ### 1. Выход (`GET /logout`)

@@ -135,6 +135,35 @@ mutation Create($input: CreateTaskInput!) {
 }
 ```
 
+## Примеры ответов (GraphQL)
+
+Порт **8094**, POST на `/query` или песочница. В хранилище задачи **t_001**, **t_002**.
+
+### query { tasks { id title done } }
+
+Ответ (`HTTP 200`):
+
+```json
+{
+  "data": {
+    "tasks": [
+      {"id": "t_001", "title": "Первая задача", "done": false},
+      {"id": "t_002", "title": "Вторая задача", "done": true}
+    ]
+  }
+}
+```
+
+### query { task(id: "t_001") { id title description done } }
+
+Ответ (`HTTP 200`): объект `task` с полями или `"task": null`, если id нет.
+
+### mutation createTask (с Bearer demo-token)
+
+Ответ (`HTTP 200`): `{"data":{"createTask":{"id":"t_003","title":"...","done":false}}}`
+
+Без токена на mutation → ошибка в поле `errors` GraphQL.
+
 ## Дополнительно: авторизация mutations
 
 - **Query** — без токена  

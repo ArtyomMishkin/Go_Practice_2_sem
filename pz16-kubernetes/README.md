@@ -110,6 +110,20 @@ kubectl port-forward svc/tasks 8082:8082
 
 Проверка: http://localhost:8082/health
 
+## Примеры запросов и ответов
+
+После `kubectl port-forward svc/tasks 8082:8082`:
+
+```bash
+curl http://localhost:8082/health
+```
+
+Ответ (`HTTP 200`):
+
+```json
+{"status":"ok"}
+```
+
 Масштабирование:
 
 ```text
