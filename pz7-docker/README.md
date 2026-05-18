@@ -1,25 +1,30 @@
-# pz7-docker
+# Практическое задание 7
 
-**Студент:** Артём Мишкин  
-**Практическое занятие №7:** Docker, Dockerfile (multi-stage), docker-compose
+## ЭФМО-02-25 Мишкин Артём Дмитриевич 17.05.2026
 
-## Цели
+---
+
+# Информация о проекте
+
+**pz7-docker** — два Go-сервиса (**auth**, **tasks**): сборка в **multi-stage** Docker-образы, запуск через **docker compose**, конфигурация через переменные окружения.
+
+## Цели занятия
 
 - Собрать Go-сервисы в Docker-образы (этап сборки и этап запуска)
 - Передавать конфигурацию через переменные окружения
 - Запускать связку **auth** + **tasks** через `docker compose`
 - Понять разницу между image и container, роль `.dockerignore`
 
-## Порты (диапазон 8080–8100)
+## ВАЖНОЕ ПРИМЕЧАНИЕ
 
 | Сервис | Порт | Назначение |
 |--------|------|------------|
 | auth | **8087** | Проверка Bearer-токена |
 | tasks | **8088** | Список задач (с вызовом auth) |
 
-> pz1 уже использует 8081/8082, pz6 — 8086. Здесь отдельные порты, чтобы практики не мешали друг другу.
+pz1 использует 8081/8082, pz6 — 8086; здесь отдельные порты, чтобы практики не мешали друг другу. Нужен [Docker Desktop](https://www.docker.com/products/docker-desktop/) для сценария с compose.
 
-## Структура
+## Файловая структура проекта
 
 ```
 pz7-docker/
@@ -37,12 +42,22 @@ pz7-docker/
 
 ## Запуск через Docker Compose (рекомендуется)
 
-Нужен установленный [Docker Desktop](https://www.docker.com/products/docker-desktop/).
-
 ```powershell
 cd pz7-docker
 .\start-compose.ps1
+```
+
+## Тесты
+
+```powershell
+cd pz7-docker
 .\tests.ps1
+```
+
+Остановка compose:
+
+```powershell
+cd pz7-docker
 .\stop-compose.ps1
 ```
 
@@ -57,7 +72,14 @@ curl.exe -i http://localhost:8088/v1/tasks `
 ## Локальный запуск без Docker
 
 ```powershell
+cd pz7-docker
 .\start-local.ps1
+```
+
+## Тесты (локально без Docker)
+
+```powershell
+cd pz7-docker
 .\tests.ps1
 ```
 

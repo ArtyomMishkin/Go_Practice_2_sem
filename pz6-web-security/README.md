@@ -1,16 +1,21 @@
-# pz6-web-security
+# Практическое задание 6
 
-**Студент:** Артём Мишкин  
-**Практическое занятие №6:** Веб-безопасность (CSRF, XSS, безопасные cookie)
+## ЭФМО-02-25 Мишкин Артём Дмитриевич 17.05.2026
 
-## Цели
+---
+
+# Информация о проекте
+
+**pz6-web-security** — веб-сервис на Go: защита от **CSRF** и **XSS**, безопасные **cookie** (`HttpOnly`, `SameSite=Lax`, опционально `Secure`), демонстрация небезопасного вывода HTML.
+
+## Цели занятия
 
 - Защита от CSRF через токен в форме и проверку на сервере
 - Защита от XSS через `html/template` (автоэкранирование)
 - Безопасные cookie: `HttpOnly`, `SameSite=Lax`, опционально `Secure`
 - Демонстрация небезопасного вывода HTML для сравнения
 
-## Структура
+## Файловая структура проекта
 
 ```
 pz6-web-security/
@@ -25,6 +30,10 @@ pz6-web-security/
 └── tests.ps1
 ```
 
+## ВАЖНОЕ ПРИМЕЧАНИЕ
+
+По умолчанию сервер слушает **http://localhost:8086** (чтобы не пересекаться с pz3–pz5). Для cookie с флагом `Secure` задайте `SECURE_COOKIE=true` (удобнее при HTTPS).
+
 ## Запуск
 
 ```powershell
@@ -34,13 +43,19 @@ cd pz6-web-security
 
 Откройте в браузере: http://localhost:8086/login
 
-По умолчанию сервер слушает порт **8086** (чтобы не конфликтовать с pz3–pz5 на 8083–8085).
-
-Для cookie с флагом `Secure` (нужен HTTPS):
+Опционально — cookie с флагом `Secure` (удобнее при HTTPS):
 
 ```powershell
+cd pz6-web-security
 $env:SECURE_COOKIE = "true"
 .\start-server.ps1
+```
+
+## Тесты
+
+```powershell
+cd pz6-web-security
+.\tests.ps1
 ```
 
 ## Запуск без PowerShell

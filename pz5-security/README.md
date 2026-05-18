@@ -8,15 +8,51 @@
 
 **pz5-security** — HTTPS-сервис на Go с PostgreSQL. Защита транспорта (TLS) и данных (параметризованные SQL-запросы, подготовленные выражения).
 
-## Порты
+## Цели занятия
+
+- Настроить HTTPS (TLS) и редирект с HTTP на HTTPS.
+- Подключить PostgreSQL и безопасные запросы (prepared statements).
+- Разделить безопасный и небезопасный (демо) доступ к данным.
+- Понять риски SQL-инъекций и роль валидации входа.
+
+## Файловая структура проекта
+
+```
+pz5-security/
+├── certs/
+├── cmd/
+│   ├── server/main.go
+│   └── gencert/main.go
+├── internal/
+│   ├── config/
+│   ├── httpapi/
+│   ├── httpserver/
+│   └── student/
+├── sql/init.sql
+├── docker-compose.yml
+├── generate-certs.ps1
+├── start-db.ps1
+├── start-server.ps1
+├── tests.ps1
+├── go.mod
+└── go.sum
+```
+
+## ВАЖНОЕ ПРИМЕЧАНИЕ
 
 | Сервис | Порт |
 |--------|------|
-| HTTP → HTTPS redirect | 8085 |
-| HTTPS API | 8443 |
-| PostgreSQL | 5432 |
+| HTTP → HTTPS redirect | **8085** |
+| HTTPS API | **8443** |
+| PostgreSQL | **5432** |
 
-## Быстрый старт
+Перед API нужны **PostgreSQL** (`.\start-db.ps1` или `docker compose`) и **сертификаты** в `certs/` (`.\generate-certs.ps1` или `go run ./cmd/gencert`). Запросы к API: `curl -k` из‑за самоподписанного сертификата. На учебном сервере порты могут отличаться.
+
+## Тестовые данные
+
+После `sql/init.sql` в БД есть студенты **id 1–3**. В `tests.ps1` **`id=999`** — проверка **404** (нет строки в БД).
+
+## Запуск
 
 ```powershell
 cd pz5-security
@@ -29,8 +65,12 @@ cd pz5-security
 
 # 3. Сервер
 .\start-server.ps1
+```
 
-# 4. Тесты
+## Тесты
+
+```powershell
+cd pz5-security
 .\tests.ps1
 ```
 
@@ -175,25 +215,6 @@ query := "SELECT ... WHERE id = " + rawID
 
 // БЕЗОПАСНО — плейсхолдер + подготовленное выражение
 stmt.QueryRow(id)  // SQL: ... WHERE id = $1
-```
-
-## Структура
-
-```
-pz5-security/
-├── certs/
-├── cmd/server/main.go
-├── internal/
-│   ├── config/
-│   ├── httpapi/
-│   ├── httpserver/
-│   └── student/
-├── sql/init.sql
-├── docker-compose.yml
-├── generate-certs.ps1
-├── start-db.ps1
-├── start-server.ps1
-└── tests.ps1
 ```
 
 ## HTTPS vs HTTP

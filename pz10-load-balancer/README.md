@@ -1,16 +1,21 @@
-# pz10-load-balancer
+# Практическое задание 10
 
-**Студент:** Артём Мишкин  
-**Практическое занятие №10:** Горизонтальное масштабирование, NGINX Load Balancer
+## ЭФМО-02-25 Мишкин Артём Дмитриевич 17.05.2026
 
-## Цели
+---
+
+# Информация о проекте
+
+**pz10-load-balancer** — несколько реплик одного сервиса **tasks** и **NGINX** как балансировщик нагрузки (round-robin), заголовок `X-Instance-ID`.
+
+## Цели занятия
 
 - Запустить несколько реплик одного сервиса без локального состояния
 - Настроить **upstream** в NGINX (распределение по кругу)
 - Проверить балансировку по заголовку `X-Instance-ID`
 - Реализовать `GET /health` для проверки живости
 
-## Порты
+## ВАЖНОЕ ПРИМЕЧАНИЕ
 
 | Компонент | Порт | Описание |
 |-----------|------|----------|
@@ -20,9 +25,9 @@
 | tasks-3 | 8093 | Локально без Docker |
 | tasks в Docker | 8082 | Внутри сети compose |
 
-> Внешний порт **8090** — не пересекается с pz3–pz5 (8083–8085).
+Внешний порт **8090** не пересекается с pz3–pz5 (8083–8085).
 
-## Структура
+## Файловая структура проекта
 
 ```
 pz10-load-balancer/
@@ -36,21 +41,17 @@ pz10-load-balancer/
 └── tests-lb.ps1
 ```
 
-## API (каждая реплика)
-
-| Метод | Путь | Описание |
-|-------|------|----------|
-| GET | `/health` | `{"status":"ok","instance":"tasks-1"}` + `X-Instance-ID` |
-| GET | `/whoami` | `{"instance":"tasks-1"}` |
-| GET | `/v1/tasks` | Список задач + `X-Instance-ID` |
-
-Переменные: `INSTANCE_ID`, `APP_PORT`.
-
 ## Запуск без Docker (локально)
 
 ```powershell
 cd pz10-load-balancer
 .\start-instances.ps1
+```
+
+## Тесты (локальные реплики)
+
+```powershell
+cd pz10-load-balancer
 .\tests-instances.ps1
 ```
 
@@ -59,8 +60,21 @@ cd pz10-load-balancer
 ## Запуск с Docker + NGINX
 
 ```powershell
+cd pz10-load-balancer
 .\start-compose.ps1
+```
+
+## Тесты (через NGINX)
+
+```powershell
+cd pz10-load-balancer
 .\tests-lb.ps1
+```
+
+Остановка:
+
+```powershell
+cd pz10-load-balancer
 .\stop-compose.ps1
 ```
 
@@ -88,6 +102,16 @@ docker compose -f deploy/lb/docker-compose.yml up --build
 ```
 
 Должны чередоваться `tasks-1`, `tasks-2`, `tasks-3`.
+
+## API (каждая реплика)
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| GET | `/health` | `{"status":"ok","instance":"tasks-1"}` + `X-Instance-ID` |
+| GET | `/whoami` | `{"instance":"tasks-1"}` |
+| GET | `/v1/tasks` | Список задач + `X-Instance-ID` |
+
+Переменные: `INSTANCE_ID`, `APP_PORT`.
 
 ## Примеры запросов и ответов
 

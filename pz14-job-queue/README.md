@@ -1,6 +1,18 @@
-# pz14-job-queue
+# Практическое задание 14
 
-**Практическое занятие №14:** Очередь задач (издатель–потребитель), повторы, DLQ, идемпотентность
+## ЭФМО-02-25 Мишкин Артём Дмитриевич 17.05.2026
+
+---
+
+# Информация о проекте
+
+**pz14-job-queue** — постановка фоновых **jobs** в RabbitMQ: **202 Accepted** сразу, повторы при ошибке, **DLQ**, идемпотентность по `message_id`.
+
+## Цели занятия
+
+- Разделить HTTP-приём заявки и фактическую обработку в воркере.
+- Настроить повторные попытки и мёртвую очередь (**DLQ**).
+- Обеспечить идемпотентность обработки по идентификатору сообщения.
 
 ## Связь с pz13
 
@@ -10,17 +22,64 @@
 | событие без ожидания результата | повторы + DLQ |
 | — | `message_id` — идемпотентность |
 
-## Порты
+## ВАЖНОЕ ПРИМЕЧАНИЕ
 
 | Компонент | Порт |
 |-----------|------|
 | tasks API | **8097** |
-| RabbitMQ | 5672 / UI 15672 |
+| RabbitMQ | 5672 / UI **15672** |
+
+Нужны RabbitMQ (Docker), процесс **worker** и **tasks** — как в pz13.
 
 ## Очереди
 
 - `task_jobs` — основная (durable, DLX → dlq)
 - `task_jobs_dlq` — сообщения после 3 неудачных попыток
+
+## Файловая структура проекта
+
+```
+pz14-job-queue/
+├── deploy/rabbit/docker-compose.yml
+├── internal/
+│   ├── publisher/
+│   ├── rabbit/
+│   └── store/
+├── pkg/jobs/
+├── services/tasks/
+├── services/worker/
+├── start-rabbit.ps1
+├── start-worker.ps1
+├── start-tasks.ps1
+├── go.mod
+└── tests.ps1
+```
+
+## Запуск
+
+```powershell
+cd pz14-job-queue
+.\start-rabbit.ps1
+```
+
+В отдельных окнах:
+
+```powershell
+cd pz14-job-queue
+.\start-worker.ps1
+```
+
+```powershell
+cd pz14-job-queue
+.\start-tasks.ps1
+```
+
+## Тесты
+
+```powershell
+cd pz14-job-queue
+.\tests.ps1
+```
 
 ## API
 
@@ -57,15 +116,6 @@ curl -i -X POST http://localhost:8097/v1/jobs/process-task \
 
 Без токена → `HTTP 401`, `{"error":"unauthorized"}`.
 
-## Запуск
-
-```powershell
-.\start-rabbit.ps1
-.\start-worker.ps1
-.\start-tasks.ps1
-.\tests.ps1
-```
-
 ## Запуск без PowerShell
 
 Из каталога `pz14-job-queue`. Три терминала — как в pz13.
@@ -86,10 +136,10 @@ go run ./cmd/tasks
 
 API: http://localhost:8097
 
-## Тесты
+Сценарии в `tests.ps1`:
 
-- `t_001` — успех, ack
-- `t_fail` — 3 retry → DLQ
+- **`t_001`** — успех, **ack**
+- **`t_fail`** — три попытки, затем **DLQ**
 
 ## JSON job
 

@@ -58,6 +58,17 @@ cd pz2-grpc
 .\generate.ps1
 ```
 
+## Тесты
+
+В отдельном окне после запущенного сервера:
+
+```powershell
+cd pz2-grpc
+.\run-client.ps1
+```
+
+(или `go run ./cmd/client` — см. «Запуск без PowerShell».)
+
 ## Запуск без PowerShell
 
 Из каталога `pz2-grpc`. Сначала сервер, затем клиент (в другом терминале).

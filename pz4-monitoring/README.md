@@ -9,13 +9,47 @@
 **pz4-monitoring** — HTTP-сервис на Go с экспортом метрик Prometheus и дашбордом Grafana.  
 Собираются счётчики запросов и ошибок, гистограммы длительности, метрики по студентам и датчик активных запросов.
 
-## Порты
+## Цели занятия
+
+- Подключить приложение к Prometheus: эндпоинт `/metrics`, типы метрик (counter, histogram, gauge).
+- Считать HTTP-запросы, ошибки и задержки; разделять бизнес-метрики по студентам.
+- Настроить сбор в Prometheus и визуализацию в Grafana (дашборд).
+- Сопоставить подходы «логи» (pz3) и «метрики» (pz4).
+
+## Файловая структура проекта
+
+```
+pz4-monitoring/
+├── cmd/server/main.go
+├── internal/httpapi/
+├── internal/metrics/metrics.go
+├── internal/student/
+├── monitoring/
+│   ├── prometheus.yml
+│   ├── prometheus.docker.yml
+│   └── grafana/
+├── docker-compose.yml
+├── start-server.ps1
+├── start-monitoring.ps1
+├── generate-traffic.ps1
+└── tests.ps1
+```
+
+## ВАЖНОЕ ПРИМЕЧАНИЕ
 
 | Сервис | Порт |
 |--------|------|
-| Go-приложение | 8084 |
+| Go-приложение | **8084** |
 | Prometheus | 9090 |
 | Grafana | 3000 |
+
+В `monitoring/prometheus.yml` цель (target) должна указывать на работающее приложение **:8084** (или имя сервиса в Docker-сети). На учебном сервере порты могут отличаться — уточните у преподавателя.
+
+Для дашборда Grafana сначала поднимите стек мониторинга (`.\start-monitoring.ps1`), затем при необходимости сгенерируйте трафик (`.\generate-traffic.ps1`).
+
+## Тестовые данные
+
+Студенты в памяти: **id 1–3** (как в pz3). В `tests.ps1` запрос **`/students/999`** — проверка **404** (записи нет).
 
 ## Запуск
 
@@ -24,10 +58,7 @@
 ```powershell
 cd pz4-monitoring
 .\start-server.ps1
-.\tests.ps1
 ```
-
-Метрики: http://localhost:8084/metrics
 
 **2. Prometheus + Grafana (Docker)**
 
@@ -39,6 +70,8 @@ cd pz4-monitoring
 - Prometheus: http://localhost:9090 → раздел «Цели» → `go_app` в статусе «работает»
 - Grafana: http://localhost:3000 (логин `admin` / `admin`)
 - Дашборд **PZ4 Go App Monitoring** подхватывается автоматически
+
+Метрики приложения: http://localhost:8084/metrics
 
 ## Запуск без PowerShell
 
@@ -62,6 +95,13 @@ docker compose up -d
 
 ```powershell
 prometheus --config.file=monitoring/prometheus.yml
+```
+
+## Тесты
+
+```powershell
+cd pz4-monitoring
+.\tests.ps1
 ```
 
 ## API
@@ -146,25 +186,6 @@ sum(app_http_errors_total)
 sum by (path) (app_http_requests_total)
 sum(rate(app_http_request_duration_seconds_sum[1m])) / sum(rate(app_http_request_duration_seconds_count[1m]))
 sum by (status_code) (app_http_errors_total)
-```
-
-## Структура
-
-```
-pz4-monitoring/
-├── cmd/server/main.go
-├── internal/httpapi/
-├── internal/metrics/metrics.go
-├── internal/student/
-├── monitoring/
-│   ├── prometheus.yml
-│   ├── prometheus.docker.yml
-│   └── grafana/
-├── docker-compose.yml
-├── start-server.ps1
-├── start-monitoring.ps1
-├── generate-traffic.ps1
-└── tests.ps1
 ```
 
 ## Метрики vs логи (практика 3)
